@@ -1,102 +1,117 @@
+{{- $fullname := include "releem-agent.fullname" . }}
+{{- $labels := include "releem-agent.labels" . }}
+{{- $selectorLabels := include "releem-agent.selectorLabels" . }}
+{{- $serviceAccountName := include "releem-agent.serviceAccountName" . }}
+{{- $config := .Values.config }}
+{{- range $index, $db := .Values.databases }}
+{{- if $index }}
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "releem-agent.fullname" . }}
+  name: {{ $fullname }}-{{ $db.name }}
   labels:
-    {{- include "releem-agent.labels" . | nindent 4 }}
+    {{- $labels | nindent 4 }}
+    app.kubernetes.io/database: {{ $db.name }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  {{- if not $.Values.autoscaling.enabled }}
+  replicas: {{ $.Values.replicaCount }}
   {{- end }}
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      {{- include "releem-agent.selectorLabels" . | nindent 6 }}
+      {{- $selectorLabels | nindent 6 }}
+      app.kubernetes.io/database: {{ $db.name }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- with $.Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "releem-agent.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
+        {{- $labels | nindent 8 }}
+        app.kubernetes.io/database: {{ $db.name }}
+        {{- with $.Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with $.Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "releem-agent.serviceAccountName" . }}
+      serviceAccountName: {{ $serviceAccountName }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ $.Chart.Name }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
           env:
             - name: RELEEM_DEBUG
-              value: {{ .Values.config.debug | quote  }}
+              value: {{ $db.debug | default $config.debug | quote }}
             - name: RELEEM_ENV
-              value: {{ .Values.config.releemEnv | quote  }}
+              value: {{ $db.releemEnv | default $config.releemEnv | quote }}
             - name: RELEEM_HOSTNAME
-              value: {{ .Values.config.releemHostname | quote  }}
+              value: {{ $db.releemHostname | default $config.releemHostname | quote }}
             - name: RELEEM_INTERVAL_GENERATE_CONFIG_SECONDS
-              value: {{ .Values.config.intervalGenerateConfigSeconds | quote }}
+              value: {{ $db.intervalGenerateConfigSeconds | default $config.intervalGenerateConfigSeconds | quote }}
             - name: RELEEM_QUERY_OPTIMIZATION
-              value: {{ .Values.config.queryOptimization | quote  }}
+              value: {{ $db.queryOptimization | default $config.queryOptimization | quote }}
             - name: MEMORY_LIMIT
-              value: {{ .Values.config.memoryLimit | quote }}
+              value: {{ $db.memoryLimit | default $config.memoryLimit | quote }}
             - name: AWS_REGION
-              value: {{ .Values.config.awsRegion | quote  }}
+              value: {{ $db.awsRegion | default $config.awsRegion | quote }}
+            - name: AWS_RDS_PARAMETER_GROUP
+              value: {{ $db.awsRdsParameterGroup | default $config.awsRdsParameterGroup | quote }}
             - name: INSTANCE_TYPE
-              value: {{ .Values.config.instanceType | quote  }}
-          {{- if or .Values.secret.create .Values.externalSecrets.enabled }}
+              value: {{ $db.instanceType | default $config.instanceType | quote }}
+          {{- if or $.Values.secret.create $.Values.externalSecrets.enabled }}
           envFrom:
-            {{- if .Values.secret.create }}
+            {{- if $.Values.secret.create }}
             - secretRef:
-                name: {{ include "releem-agent.fullname" . }}-secret
+                name: {{ $fullname }}-secret
             {{- end }}
-            {{- if .Values.externalSecrets.enabled }}
+            {{- if $.Values.externalSecrets.enabled }}
             - secretRef:
-                name: {{ include "releem-agent.fullname" . }}-es
+                name: {{ $fullname }}-es
             {{- end }}
           {{- end }}
-          {{- with .Values.livenessProbe }}
+          {{- with $.Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.readinessProbe }}
+          {{- with $.Values.readinessProbe }}
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.lifecycle }}
+          {{- with $.Values.lifecycle }}
           lifecycle:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+            {{- toYaml $.Values.resources | nindent 12 }}
+          {{- with $.Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
+      {{- with $.Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with $.Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with $.Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with $.Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
