@@ -19,9 +19,18 @@ config:
   releemHostname: "releem"
   queryOptimization: "false"
   awsRegion: "us-east-1"
+  awsRdsParameterGroup: ""
   # instanceType can be "local" or "aws/rds"
   instanceType: "local"
   intervalGenerateConfigSeconds: "43200"
+
+databases: []
+  # - name: prod-db
+  #   releemHostname: "prod-mysql"
+  #   instanceType: "aws/rds"
+  # - name: staging-db
+  #   releemHostname: "staging-mysql"
+  #   debug: "true"
 
 serviceAccount:
   # Specifies whether a service account should be created
