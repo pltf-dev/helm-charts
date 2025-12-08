@@ -1,0 +1,75 @@
+name: "Sync PR Title Scopes"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "charts/*/Chart.yaml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-scopes:
+    name: Sync PR title scopes with chart names
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get chart names and update pr-title.yml
+        id: update-scopes
+        run: |
+          # Get all chart directory names
+          CHART_NAMES=$(ls -1 charts/ | sort)
+
+          # Build the scopes block with proper indentation
+          SCOPES_BLOCK=""
+          for chart in $CHART_NAMES; do
+            SCOPES_BLOCK="${SCOPES_BLOCK}            ${chart}\n"
+          done
+
+          # Create the new scopes section
+          NEW_SCOPES="scopes: |\n            deps\n            docs\n            github\n${SCOPES_BLOCK}"
+
+          # Use awk to replace the scopes section in pr-title.yml
+          awk -v new_scopes="$NEW_SCOPES" '
+            /scopes: \|/ {
+              print "          " new_scopes
+              in_scopes = 1
+              next
+            }
+            in_scopes && /^[[:space:]]+[a-z]/ && !/requireScope/ {
+              next
+            }
+            in_scopes && (/requireScope/ || /^[[:space:]]*#/) {
+              in_scopes = 0
+            }
+            !in_scopes {
+              print
+            }
+          ' .github/workflows/pr-title.yml > .github/workflows/pr-title.yml.tmp
+
+          mv .github/workflows/pr-title.yml.tmp .github/workflows/pr-title.yml
+
+          # Check if there are changes
+          if git diff --quiet .github/workflows/pr-title.yml; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Chart scopes updated:"
+            git diff .github/workflows/pr-title.yml
+          fi
+
+      - name: Commit and push changes
+        if: steps.update-scopes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .github/workflows/pr-title.yml
+          git commit -m "chore(github): sync PR title scopes with chart names"
+          git push
