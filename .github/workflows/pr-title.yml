@@ -30,5 +30,6 @@ jobs:
             deployment
             external-secrets-refresher
             external-services
+            releem-agent
           # Configure that a scope must always be provided.
           requireScope: false
