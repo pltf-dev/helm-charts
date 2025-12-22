@@ -7,13 +7,14 @@
 {{- if $index }}
 ---
 {{- end }}
+{{- $dbName := required (printf "Database name is required for entry in databases list") $db.name }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $fullname }}-{{ $db.name }}
+  name: {{ (printf "%s-%s" $fullname $dbName) | trunc 63 }}
   labels:
     {{- $labels | nindent 4 }}
-    app.kubernetes.io/database: {{ $db.name }}
+    app.kubernetes.io/database: {{ $dbName }}
 spec:
   {{- if not $.Values.autoscaling.enabled }}
   replicas: {{ $.Values.replicaCount }}
@@ -23,7 +24,7 @@ spec:
   selector:
     matchLabels:
       {{- $selectorLabels | nindent 6 }}
-      app.kubernetes.io/database: {{ $db.name }}
+      app.kubernetes.io/database: {{ $dbName }}
   template:
     metadata:
       {{- with $.Values.podAnnotations }}
@@ -32,7 +33,7 @@ spec:
       {{- end }}
       labels:
         {{- $labels | nindent 8 }}
-        app.kubernetes.io/database: {{ $db.name }}
+        app.kubernetes.io/database: {{ $dbName }}
         {{- with $.Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -65,6 +66,8 @@ spec:
               value: {{ $db.memoryLimit | default $config.memoryLimit | quote }}
             - name: AWS_REGION
               value: {{ $db.awsRegion | default $config.awsRegion | quote }}
+            - name: AWS_RDS_DB
+              value: {{ $dbName | quote }}
             - name: AWS_RDS_PARAMETER_GROUP
               value: {{ $db.awsRdsParameterGroup | default $config.awsRdsParameterGroup | quote }}
             - name: INSTANCE_TYPE
