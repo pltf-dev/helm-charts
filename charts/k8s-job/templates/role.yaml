@@ -1,0 +1,37 @@
+{{- range $jobName, $jobConfig := .Values.jobs }}
+{{- if $jobConfig.enabled }}
+{{- $mergedJson := include "k8s-job.mergeJobConfig" (dict "root" $ "jobName" $jobName "jobConfig" $jobConfig) }}
+{{- $merged := $mergedJson | fromJson }}
+{{- if and $merged.rbac.create $merged.rbac.rules }}
+{{- $fullname := include "k8s-job.jobFullname" (dict "root" $ "jobName" $jobName) }}
+---
+{{- if $merged.rbac.clusterScope }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $fullname }}
+  annotations:
+    argocd.argoproj.io/hook: {{ $merged.argocd.hook }}
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    {{- include "k8s-job.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $jobName }}
+rules:
+  {{- toYaml $merged.rbac.rules | nindent 2 }}
+{{- else }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}
+  annotations:
+    argocd.argoproj.io/hook: {{ $merged.argocd.hook }}
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    {{- include "k8s-job.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $jobName }}
+rules:
+  {{- toYaml $merged.rbac.rules | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

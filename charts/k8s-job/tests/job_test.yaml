@@ -1,0 +1,336 @@
+suite: job tests
+templates:
+  - job.yaml
+tests:
+  - it: should not render when no jobs are defined
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render when job is disabled
+    set:
+      jobs:
+        my-job:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a job when enabled
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+
+  - it: should render multiple jobs
+    set:
+      jobs:
+        job-one:
+          enabled: true
+          command: ["echo"]
+          args: ["one"]
+        job-two:
+          enabled: true
+          command: ["echo"]
+          args: ["two"]
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should set correct job name
+    release:
+      name: test-release
+    set:
+      jobs:
+        deploy-lambda:
+          enabled: true
+          command: ["npm"]
+          args: ["run", "deploy"]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-k8s-job-deploy-lambda
+
+  - it: should use default image when not specified
+    set:
+      jobDefaults:
+        image:
+          repository: node
+          tag: "20-alpine"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["npm"]
+          args: ["test"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "node:20-alpine"
+
+  - it: should override image per job
+    set:
+      jobDefaults:
+        image:
+          repository: node
+          tag: "20-alpine"
+      jobs:
+        my-job:
+          enabled: true
+          image:
+            repository: alpine
+            tag: "3.18"
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "alpine:3.18"
+
+  - it: should set command and args
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["npm"]
+          args: ["run", "deploy:prod"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["npm"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["run", "deploy:prod"]
+
+  - it: should use default resources
+    set:
+      jobDefaults:
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+
+  - it: should override resources per job
+    set:
+      jobDefaults:
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          resources:
+            limits:
+              cpu: "2"
+              memory: 1Gi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: "2"
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 1Gi
+
+  - it: should set default job spec values
+    set:
+      jobDefaults:
+        ttlSecondsAfterFinished: 600
+        backoffLimit: 1
+        completions: 1
+        parallelism: 1
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 600
+      - equal:
+          path: spec.backoffLimit
+          value: 1
+      - equal:
+          path: spec.completions
+          value: 1
+      - equal:
+          path: spec.parallelism
+          value: 1
+
+  - it: should override job spec values per job
+    set:
+      jobDefaults:
+        ttlSecondsAfterFinished: 600
+        backoffLimit: 1
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          ttlSecondsAfterFinished: 300
+          backoffLimit: 3
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 300
+      - equal:
+          path: spec.backoffLimit
+          value: 3
+
+  - it: should set ArgoCD annotations with defaults
+    set:
+      jobDefaults:
+        argocd:
+          hook: PreSync
+          syncWave: "1"
+          hookDeletePolicy: BeforeHookCreation
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PreSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "1"
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation
+
+  - it: should override ArgoCD hook per job
+    set:
+      jobDefaults:
+        argocd:
+          hook: PreSync
+          syncWave: "1"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          argocd:
+            hook: PostSync
+            syncWave: "5"
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PostSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "5"
+
+  - it: should set environment variables
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: AWS_REGION
+              value: us-east-1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].name
+          value: NODE_ENV
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: production
+
+  - it: should set envFrom for secrets
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          envFrom:
+            - secretRef:
+                name: my-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].envFrom[0].secretRef.name
+          value: my-secret
+
+  - it: should set workingDir
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["npm"]
+          args: ["run", "build"]
+          workingDir: /app
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].workingDir
+          value: /app
+
+  - it: should set volumes and volumeMounts
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          volumes:
+            - name: data
+              emptyDir: {}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0].name
+          value: data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /data
+
+  - it: should have correct labels
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: k8s-job
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: test-release
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: my-job

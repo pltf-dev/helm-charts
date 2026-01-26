@@ -1,0 +1,284 @@
+suite: rbac tests
+templates:
+  - role.yaml
+  - rolebinding.yaml
+tests:
+  - it: should not render role when rbac.create is false
+    templates:
+      - role.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render rolebinding when rbac.create is false
+    templates:
+      - rolebinding.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render role when rules are empty
+    templates:
+      - role.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules: []
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render Role when rbac.create is true with rules
+    templates:
+      - role.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get", "list"]
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Role
+
+  - it: should render RoleBinding when rbac.create is true with rules
+    templates:
+      - rolebinding.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get", "list"]
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: RoleBinding
+
+  - it: should render ClusterRole when clusterScope is true
+    templates:
+      - role.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            clusterScope: true
+            rules:
+              - apiGroups: [""]
+                resources: ["nodes"]
+                verbs: ["get", "list"]
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ClusterRole
+
+  - it: should render ClusterRoleBinding when clusterScope is true
+    templates:
+      - rolebinding.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            clusterScope: true
+            rules:
+              - apiGroups: [""]
+                resources: ["nodes"]
+                verbs: ["get", "list"]
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ClusterRoleBinding
+
+  - it: should set correct role name
+    templates:
+      - role.yaml
+    release:
+      name: test-release
+    set:
+      jobs:
+        k8s-task:
+          enabled: true
+          command: ["kubectl"]
+          args: ["get", "cm"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get"]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-k8s-job-k8s-task
+
+  - it: should set correct rules
+    templates:
+      - role.yaml
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps", "secrets"]
+                verbs: ["get", "list", "watch"]
+    asserts:
+      - equal:
+          path: rules[0].apiGroups
+          value: [""]
+      - equal:
+          path: rules[0].resources
+          value: ["configmaps", "secrets"]
+      - equal:
+          path: rules[0].verbs
+          value: ["get", "list", "watch"]
+
+  - it: should reference correct serviceaccount in rolebinding
+    templates:
+      - rolebinding.yaml
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get"]
+    asserts:
+      - equal:
+          path: subjects[0].kind
+          value: ServiceAccount
+      - equal:
+          path: subjects[0].name
+          value: test-release-k8s-job-my-job
+
+  - it: should reference correct role in rolebinding
+    templates:
+      - rolebinding.yaml
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get"]
+    asserts:
+      - equal:
+          path: roleRef.kind
+          value: Role
+      - equal:
+          path: roleRef.name
+          value: test-release-k8s-job-my-job
+
+  - it: should set ArgoCD annotations at sync-wave 0
+    templates:
+      - role.yaml
+    set:
+      jobDefaults:
+        argocd:
+          hook: PreSync
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get"]
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PreSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "0"
+
+  - it: should include namespace in ClusterRoleBinding subject
+    templates:
+      - rolebinding.yaml
+    release:
+      name: test-release
+      namespace: my-namespace
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          rbac:
+            create: true
+            clusterScope: true
+            rules:
+              - apiGroups: [""]
+                resources: ["nodes"]
+                verbs: ["get"]
+    asserts:
+      - equal:
+          path: subjects[0].namespace
+          value: my-namespace
