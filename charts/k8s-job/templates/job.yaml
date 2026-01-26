@@ -1,0 +1,93 @@
+{{- range $jobName, $jobConfig := .Values.jobs }}
+{{- if $jobConfig.enabled }}
+{{- $mergedJson := include "k8s-job.mergeJobConfig" (dict "root" $ "jobName" $jobName "jobConfig" $jobConfig) }}
+{{- $merged := $mergedJson | fromJson }}
+{{- $fullname := include "k8s-job.jobFullname" (dict "root" $ "jobName" $jobName) }}
+{{- $image := printf "%s:%s" $merged.image.repository $merged.image.tag }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/hook: {{ $merged.argocd.hook }}
+    argocd.argoproj.io/sync-wave: {{ $merged.argocd.syncWave | quote }}
+    argocd.argoproj.io/hook-delete-policy: {{ $merged.argocd.hookDeletePolicy }}
+  labels:
+    {{- include "k8s-job.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $jobName }}
+spec:
+  ttlSecondsAfterFinished: {{ $merged.ttlSecondsAfterFinished }}
+  backoffLimit: {{ $merged.backoffLimit }}
+  completions: {{ $merged.completions }}
+  parallelism: {{ $merged.parallelism }}
+  template:
+    metadata:
+      labels:
+        {{- include "k8s-job.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $jobName }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $fullname }}
+      {{- with $merged.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $merged.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $merged.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $merged.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $merged.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $jobName }}
+          image: {{ $image | quote }}
+          imagePullPolicy: {{ $merged.image.pullPolicy | default "IfNotPresent" }}
+          {{- with $merged.workingDir }}
+          workingDir: {{ . }}
+          {{- end }}
+          {{- with $merged.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $merged.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
+{{- end }}

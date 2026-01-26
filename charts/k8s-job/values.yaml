@@ -1,0 +1,111 @@
+---
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+# Default values applied to all jobs (can be overridden per job)
+jobDefaults:
+  image:
+    repository: node
+    tag: "20-alpine"
+    pullPolicy: IfNotPresent
+
+  # Job spec defaults
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+
+  # ArgoCD hook configuration
+  argocd:
+    hook: PreSync
+    syncWave: "1"
+    hookDeletePolicy: BeforeHookCreation
+
+  # Container defaults
+  command: []
+  args: []
+  workingDir: ""
+
+  # Environment configuration
+  env: []
+  envFrom: []
+
+  # Resource defaults
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Security contexts
+  podSecurityContext: {}
+  securityContext: {}
+
+  # Scheduling
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Volumes
+  volumes: []
+  volumeMounts: []
+
+  # RBAC defaults
+  serviceAccount:
+    create: true
+    annotations: {}
+  rbac:
+    create: false
+    clusterScope: false
+    rules: []
+
+  # External Secrets defaults
+  externalSecret:
+    enabled: false
+    # name: ""  # defaults to job fullname
+    refreshInterval: "0"
+    refreshPolicy: OnChange
+    secretStoreRef:
+      name: aws-parameter-store-cluster
+      kind: ClusterSecretStore
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    dataFrom:
+      path: ""
+      regexp: ""
+      rewrite: {}
+        # source: ""
+        # target: ""
+
+# List of jobs to create
+# Each job inherits from jobDefaults and can override any value
+jobs: {}
+  # Example job configuration:
+  # deploy-lambda:
+  #   enabled: true
+  #   image:
+  #     repository: node
+  #     tag: "20-alpine"
+  #   command: ["npm"]
+  #   args: ["run", "deploy:prod"]
+  #   workingDir: /app
+  #   env:
+  #     - name: AWS_REGION
+  #       value: us-east-1
+  #   envFrom:
+  #     - secretRef:
+  #         name: aws-credentials
+  #   resources:
+  #     limits:
+  #       cpu: "1"
+  #       memory: 512Mi
+  #   serviceAccount:
+  #     create: true
+  #     annotations:
+  #       eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/lambda-deploy
+  #   rbac:
+  #     create: false

@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: k8s-job
+description: A Helm chart to deploy generic Kubernetes jobs with configurable RBAC
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
