@@ -115,6 +115,26 @@ entries:
     version: 0.1.0
   releem-agent:
   - apiVersion: v2
+    appVersion: 1.22.3.2
+    created: "2026-01-26T22:12:20.986207998Z"
+    description: Releem agent Helm chart for Kubernetes
+    digest: 36235f53aab5b2da4ef8ea907fc2bb0f097b15529308c2f3de49761d4b80ef9d
+    home: https://releem.com/
+    keywords:
+    - releem
+    - releem-agent
+    maintainers:
+    - email: marcel@pltf.dev
+      name: marcel-dias
+    name: releem-agent
+    sources:
+    - https://github.com/Releem
+    - https://github.com/pltf-dev/helm-charts/tree/main/charts/releem-agent
+    type: application
+    urls:
+    - https://github.com/pltf-dev/helm-charts/releases/download/releem-agent-0.3.0/releem-agent-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 1.22.3.1
     created: "2025-12-22T23:09:40.143020215Z"
     description: Releem agent Helm chart for Kubernetes
@@ -254,4 +274,4 @@ entries:
     urls:
     - https://github.com/pltf-dev/helm-charts/releases/download/releem-agent-0.1.0/releem-agent-0.1.0.tgz
     version: 0.1.0
-generated: "2026-01-26T13:50:01.233909413Z"
+generated: "2026-01-26T22:12:20.986245859Z"
