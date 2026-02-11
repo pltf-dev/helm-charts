@@ -2,8 +2,8 @@ apiVersion: v2
 name: external-secrets-refresher
 description: A Helm chart to deploy a kubernetes job to force External secret to refresh
 type: application
-version: 0.1.1
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "1.35.0"
 
 home: https://github.com/pltf-dev/helm-charts
 # icon: https://.svg
