@@ -39,6 +39,25 @@ entries:
     version: 0.1.0
   external-secrets-refresher:
   - apiVersion: v2
+    appVersion: 1.35.0
+    created: "2026-02-11T10:17:45.004618129Z"
+    description: A Helm chart to deploy a kubernetes job to force External secret
+      to refresh
+    digest: 32d90f585ca9d364a86674bc0c98266cc8253f69d7fd77c43feefc2f3f550f14
+    home: https://github.com/pltf-dev/helm-charts
+    keywords:
+    - external-secrets
+    - external-secrets-refresher
+    - secrets
+    maintainers:
+    - email: marcel@pltf.dev
+      name: marcel-dias
+    name: external-secrets-refresher
+    type: application
+    urls:
+    - https://github.com/pltf-dev/helm-charts/releases/download/external-secrets-refresher-0.2.0/external-secrets-refresher-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     appVersion: 0.1.0
     created: "2024-08-09T16:57:45.659686646Z"
     description: A Helm chart to deploy a kubernetes job to force External secret
@@ -274,4 +293,4 @@ entries:
     urls:
     - https://github.com/pltf-dev/helm-charts/releases/download/releem-agent-0.1.0/releem-agent-0.1.0.tgz
     version: 0.1.0
-generated: "2026-01-26T22:12:20.986245859Z"
+generated: "2026-02-11T10:17:45.004644246Z"
