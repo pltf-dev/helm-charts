@@ -8,7 +8,7 @@ imagePullSecrets: []
 jobDefaults:
   image:
     repository: node
-    tag: "20-alpine"
+    tag: "24-alpine"
     pullPolicy: IfNotPresent
 
   # Job spec defaults
