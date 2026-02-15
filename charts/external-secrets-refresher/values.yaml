@@ -1,7 +1,7 @@
 ---
 image:
   repository: alpine/k8s
-  tag: 1.35.0
+  tag: 1.35.1
 
 ttlSecondsAfterFinished: 600
 backoffLimit: 1
