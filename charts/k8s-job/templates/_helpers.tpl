@@ -162,16 +162,19 @@ Usage: {{ include "k8s-job.mergeJobConfig" (dict "root" . "jobName" $jobName "jo
 {{- $defaultStoreRef := $defaultES.secretStoreRef | default dict }}
 {{- $jobStoreRef := $jobES.secretStoreRef | default dict }}
 {{- $_ := set $mergedES "secretStoreRef" (merge $jobStoreRef $defaultStoreRef) }}
-{{/* Merge dataFrom */}}
-{{- $defaultDataFrom := $defaultES.dataFrom | default dict }}
-{{- $jobDataFrom := $jobES.dataFrom | default dict }}
-{{- $mergedDataFrom := dict }}
-{{- $_ := set $mergedDataFrom "path" ($jobDataFrom.path | default $defaultDataFrom.path) }}
-{{- $_ := set $mergedDataFrom "regexp" ($jobDataFrom.regexp | default $defaultDataFrom.regexp) }}
-{{- $defaultRewrite := $defaultDataFrom.rewrite | default dict }}
-{{- $jobRewrite := $jobDataFrom.rewrite | default dict }}
-{{- $_ := set $mergedDataFrom "rewrite" (merge $jobRewrite $defaultRewrite) }}
-{{- $_ := set $mergedES "dataFrom" $mergedDataFrom }}
+{{/* Merge dataFrom - supports both single object and array formats */}}
+{{- $jobDataFrom := $jobES.dataFrom }}
+{{- $defaultDataFrom := $defaultES.dataFrom }}
+{{- if $jobDataFrom }}
+  {{- /* Job has dataFrom defined, use it directly (array or object) */}}
+  {{- $_ := set $mergedES "dataFrom" $jobDataFrom }}
+{{- else if $defaultDataFrom }}
+  {{- /* Fall back to defaults */}}
+  {{- $_ := set $mergedES "dataFrom" $defaultDataFrom }}
+{{- else }}
+  {{- /* No dataFrom defined anywhere, use empty dict */}}
+  {{- $_ := set $mergedES "dataFrom" dict }}
+{{- end }}
 {{- $_ := set $merged "externalSecret" $mergedES }}
 
 {{- $merged | toJson }}

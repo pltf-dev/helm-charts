@@ -74,12 +74,26 @@ jobDefaults:
       kind: ClusterSecretStore
     creationPolicy: Owner
     deletionPolicy: Retain
+    # dataFrom can be a single object (legacy) or an array of objects (for multiple paths)
+    # Single path example:
     dataFrom:
       path: ""
       regexp: ""
       rewrite: {}
         # source: ""
         # target: ""
+    # Multiple paths example:
+    # dataFrom:
+    #   - path: /lambda/my-lambda/
+    #     regexp: ".*"
+    #     rewrite:
+    #       source: "/lambda/my-lambda/(.*)"
+    #       target: "$1"
+    #   - path: /shared/
+    #     regexp: "S3_CLOUD_.*"
+    #     rewrite:
+    #       source: "/shared/(.*)"
+    #       target: "$1"
 
 # List of jobs to create
 # Each job inherits from jobDefaults and can override any value
@@ -91,7 +105,7 @@ jobs: {}
   #     repository: node
   #     tag: "20-alpine"
   #   command: ["npm"]
-  #   args: ["run", "deploy:prod"]
+  #   args: ["run", "deploy"]
   #   workingDir: /app
   #   env:
   #     - name: AWS_REGION

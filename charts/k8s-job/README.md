@@ -94,11 +94,39 @@ jobs:
       enabled: true
       name: lambda-secrets
       dataFrom:
-        path: /cf2/production/lambda/
+        path: /lambda/
         regexp: ".*"
         rewrite:
-          source: "/cf2/production/lambda/(.*)"
+          source: "/lambda/(.*)"
           target: "$1"
+```
+
+### Job with Multiple External Secret Paths
+
+```yaml
+jobs:
+  deploy-lambda:
+    enabled: true
+    command: ["npm"]
+    args: ["run", "deploy:prod"]
+    envFrom:
+      - secretRef:
+          name: lambda-secrets
+    externalSecret:
+      enabled: true
+      name: lambda-secrets
+      # dataFrom supports an array for multiple paths
+      dataFrom:
+        - path: /lambda/
+          regexp: ".*"
+          rewrite:
+            source: "/lambda/(.*)"
+            target: "$1"
+        - path: /shared/
+          regexp: "S3_.*"
+          rewrite:
+            source: "/shared/(.*)"
+            target: "$1"
 ```
 
 ## Configuration
