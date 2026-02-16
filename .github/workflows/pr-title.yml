@@ -30,6 +30,7 @@ jobs:
             deployment
             external-secrets-refresher
             external-services
+            k8s-job
             releem-agent
           # Configure that a scope must always be provided.
           requireScope: false
