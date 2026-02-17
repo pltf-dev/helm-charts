@@ -315,6 +315,140 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts[0].mountPath
           value: /data
 
+  - it: should use global image when set
+    set:
+      global:
+        image:
+          repository: 123456789.dkr.ecr.us-east-1.amazonaws.com/my-app
+          tag: "abc123"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["npm"]
+          args: ["run", "deploy"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "123456789.dkr.ecr.us-east-1.amazonaws.com/my-app:abc123"
+
+  - it: should override global image with job-specific image
+    set:
+      global:
+        image:
+          repository: 123456789.dkr.ecr.us-east-1.amazonaws.com/my-app
+          tag: "abc123"
+      jobs:
+        my-job:
+          enabled: true
+          image:
+            repository: custom-repo/custom-image
+            tag: "v2.0.0"
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "custom-repo/custom-image:v2.0.0"
+
+  - it: should use global image over jobDefaults
+    set:
+      global:
+        image:
+          repository: global-repo/app
+          tag: "global-tag"
+      jobDefaults:
+        image:
+          repository: default-repo/app
+          tag: "default-tag"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "global-repo/app:global-tag"
+
+  - it: should allow job to override only the tag while using global repository
+    set:
+      global:
+        image:
+          repository: global-repo/app
+          tag: "global-tag"
+      jobs:
+        my-job:
+          enabled: true
+          image:
+            tag: "job-specific-tag"
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "global-repo/app:job-specific-tag"
+
+  - it: should fall back to jobDefaults when global image is empty
+    set:
+      global: {}
+      jobDefaults:
+        image:
+          repository: node
+          tag: "20-alpine"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "node:20-alpine"
+
+  - it: should use global repository with jobDefaults tag as fallback
+    set:
+      global:
+        image:
+          repository: global-repo/app
+      jobDefaults:
+        image:
+          repository: default-repo/app
+          tag: "default-tag"
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "global-repo/app:default-tag"
+
+  - it: should apply global image to all jobs
+    set:
+      global:
+        image:
+          repository: shared-repo/app
+          tag: "shared-tag"
+      jobs:
+        job-one:
+          enabled: true
+          command: ["echo"]
+          args: ["one"]
+        job-two:
+          enabled: true
+          command: ["echo"]
+          args: ["two"]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "shared-repo/app:shared-tag"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "shared-repo/app:shared-tag"
+        documentIndex: 1
+
   - it: should have correct labels
     release:
       name: test-release
