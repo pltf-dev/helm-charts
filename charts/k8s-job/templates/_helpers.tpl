@@ -74,12 +74,16 @@ Usage: {{ include "k8s-job.mergeJobConfig" (dict "root" . "jobName" $jobName "jo
 {{- define "k8s-job.mergeJobConfig" -}}
 {{- $defaults := .root.Values.jobDefaults }}
 {{- $job := .jobConfig }}
+{{- $global := .root.Values.global | default dict }}
 {{- $merged := dict }}
 
-{{/* Merge image */}}
+{{/* Merge image with priority: job > global > jobDefaults */}}
+{{/* Global image takes precedence over jobDefaults when explicitly set */}}
+{{- $globalImage := $global.image | default dict }}
 {{- $defaultImage := $defaults.image | default dict }}
 {{- $jobImage := $job.image | default dict }}
-{{- $_ := set $merged "image" (merge $jobImage $defaultImage) }}
+{{- $baseImage := merge $globalImage $defaultImage }}
+{{- $_ := set $merged "image" (merge $jobImage $baseImage) }}
 
 {{/* Merge simple values with defaults */}}
 {{- $_ := set $merged "ttlSecondsAfterFinished" ($job.ttlSecondsAfterFinished | default $defaults.ttlSecondsAfterFinished) }}
