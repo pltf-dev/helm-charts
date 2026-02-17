@@ -4,7 +4,17 @@ fullnameOverride: ""
 
 imagePullSecrets: []
 
+# Global configuration (typically set by parent chart)
+# When used as a subchart, the parent can set global.image to share
+# image configuration across multiple subcharts
+global:
+  image:
+    # repository: alpine/k8s
+    # tag: "1.34.1"
+    # pullPolicy: IfNotPresent
+
 # Default values applied to all jobs (can be overridden per job)
+# Priority: job-specific > global > jobDefaults
 jobDefaults:
   image:
     repository: node

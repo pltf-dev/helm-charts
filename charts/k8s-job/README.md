@@ -131,6 +131,30 @@ jobs:
 
 ## Configuration
 
+### Global Image (for Subcharts)
+
+When using k8s-job as a subchart dependency, the parent chart can set a global image that all jobs will inherit. This is useful when you want all subcharts to share the same image.
+
+```yaml
+# In parent chart values.yaml
+global:
+  image:
+    repository: alpine/k8s
+    tag: "1.34.1"
+    pullPolicy: IfNotPresent
+
+k8s-job:
+  enabled: true
+  jobs:
+    deploy-lambda:
+      enabled: true
+      command: ["npm"]
+      args: ["run", "deploy"]
+      # Uses global.image automatically
+```
+
+**Image Priority**: job-specific > global > jobDefaults
+
 ### Global Defaults (`jobDefaults`)
 
 | Parameter | Description | Default |
