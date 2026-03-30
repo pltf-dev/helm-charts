@@ -36,8 +36,20 @@ jobs:
     command: ["npm"]
     args: ["run", "deploy:prod"]
     serviceAccount:
+      create: true
       annotations:
         eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/lambda-deploy
+```
+
+### Job with an Existing Service Account
+
+```yaml
+jobs:
+  deploy-lambda:
+    enabled: true
+    command: ["npm"]
+    args: ["run", "deploy:prod"]
+    serviceAccountName: my-existing-sa
 ```
 
 ### Job with RBAC
@@ -193,13 +205,17 @@ Each job under `jobs.<name>` can override any default and supports:
 | `affinity` | Pod affinity rules |
 | `podSecurityContext` | Pod-level security context |
 | `securityContext` | Container-level security context |
+| `serviceAccountName` | Use an existing service account by name |
 
 ### Service Account Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `serviceAccount.create` | Create service account | `true` |
+| `serviceAccountName` | Name of an existing service account to use | `""` |
+| `serviceAccount.create` | Create a new service account | `false` |
 | `serviceAccount.annotations` | SA annotations (e.g., IRSA) | `{}` |
+
+> **Priority**: `serviceAccount.create` takes precedence over `serviceAccountName`. When `create` is `true`, the chart generates a service account named after the job. When `create` is `false` and `serviceAccountName` is set, the job uses the existing service account.
 
 ### RBAC Configuration
 
@@ -272,6 +288,7 @@ jobs:
       - secretRef:
           name: lambda-secrets
     serviceAccount:
+      create: true
       annotations:
         eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/lambda-deploy
     resources:
