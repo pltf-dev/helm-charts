@@ -20,7 +20,7 @@ global: {}
 jobDefaults:
   image:
     repository: node
-    tag: "20-alpine"
+    tag: "24-alpine"
     pullPolicy: IfNotPresent
 
   # Job spec defaults
@@ -31,7 +31,7 @@ jobDefaults:
 
   # ArgoCD hook configuration
   argocd:
-    hook: PreSync
+    hook: Sync
     syncWave: "1"
     hookDeletePolicy: BeforeHookCreation
 
@@ -67,8 +67,10 @@ jobDefaults:
   volumeMounts: []
 
   # RBAC defaults
+  # inform serviceAccountName to use an existing SA
+  serviceAccountName: ""
   serviceAccount:
-    create: true
+    create: false
     annotations: {}
   rbac:
     create: false
@@ -129,8 +131,10 @@ jobs: {}
   #     limits:
   #       cpu: "1"
   #       memory: 512Mi
+  #   # inform serviceAccountName to use an existing SA
+  #   serviceAccountName: ""
   #   serviceAccount:
-  #     create: true
+  #     create: false
   #     annotations:
   #       eks.amazonaws.com/role-arn: arn:aws:iam::123456789:role/lambda-deploy
   #   rbac:
