@@ -32,7 +32,7 @@ jobs:
     enabled: true
     image:
       repository: node
-      tag: "20-alpine"
+      tag: "24-alpine"
     command: ["npm"]
     args: ["run", "deploy:prod"]
     serviceAccount:
@@ -229,7 +229,7 @@ Each job under `jobs.<name>` can override any default and supports:
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `argocd.hook` | ArgoCD hook type | `PreSync` |
+| `argocd.hook` | ArgoCD hook type | `Sync` |
 | `argocd.syncWave` | Sync wave for job | `1` |
 | `argocd.hookDeletePolicy` | Hook delete policy | `BeforeHookCreation` |
 
