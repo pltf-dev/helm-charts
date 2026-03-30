@@ -121,6 +121,9 @@ Usage: {{ include "k8s-job.mergeJobConfig" (dict "root" . "jobName" $jobName "jo
 {{- $_ := set $merged "volumes" ($job.volumes | default $defaults.volumes) }}
 {{- $_ := set $merged "volumeMounts" ($job.volumeMounts | default $defaults.volumeMounts) }}
 
+{{/* Merge serviceAccountName */}}
+{{- $_ := set $merged "serviceAccountName" ($job.serviceAccountName | default $defaults.serviceAccountName) }}
+
 {{/* Merge serviceAccount - check job-level create first, then default */}}
 {{- $defaultSA := $defaults.serviceAccount | default dict }}
 {{- $jobSA := $job.serviceAccount | default dict }}

@@ -29,7 +29,11 @@ spec:
         app.kubernetes.io/component: {{ $jobName }}
     spec:
       restartPolicy: Never
+      {{- if $merged.serviceAccount.create }}
       serviceAccountName: {{ $fullname }}
+      {{- else if $merged.serviceAccountName }}
+      serviceAccountName: {{ $merged.serviceAccountName }}
+      {{- end }}
       {{- with $merged.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}

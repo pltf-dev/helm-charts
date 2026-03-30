@@ -3,8 +3,8 @@ apiVersion: v2
 name: k8s-job
 description: A Helm chart to deploy generic Kubernetes jobs with configurable RBAC
 type: application
-version: 0.2.2
-appVersion: "0.2.2"
+version: 0.3.0
+appVersion: "0.3.0"
 
 home: https://github.com/pltf-dev/helm-charts
 # icon: https://.svg

@@ -449,6 +449,94 @@ tests:
           value: "shared-repo/app:shared-tag"
         documentIndex: 1
 
+  - it: should not set serviceAccountName when neither serviceAccountName nor serviceAccount.create is set
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - notExists:
+          path: spec.template.spec.serviceAccountName
+
+  - it: should use existing serviceAccountName when specified
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          serviceAccountName: my-existing-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-existing-sa
+
+  - it: should use generated serviceAccountName when serviceAccount.create is true
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          serviceAccount:
+            create: true
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: test-release-k8s-job-my-job
+
+  - it: should prefer serviceAccount.create over serviceAccountName
+    release:
+      name: test-release
+    set:
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          serviceAccountName: my-existing-sa
+          serviceAccount:
+            create: true
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: test-release-k8s-job-my-job
+
+  - it: should use jobDefaults serviceAccountName
+    set:
+      jobDefaults:
+        serviceAccountName: default-sa
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default-sa
+
+  - it: should override jobDefaults serviceAccountName per job
+    set:
+      jobDefaults:
+        serviceAccountName: default-sa
+      jobs:
+        my-job:
+          enabled: true
+          command: ["echo"]
+          args: ["hello"]
+          serviceAccountName: job-specific-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: job-specific-sa
+
   - it: should have correct labels
     release:
       name: test-release
