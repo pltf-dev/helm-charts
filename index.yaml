@@ -115,6 +115,24 @@ entries:
     version: 0.1.0
   k8s-job:
   - apiVersion: v2
+    appVersion: 0.3.0
+    created: "2026-03-30T22:21:33.413737177Z"
+    description: A Helm chart to deploy generic Kubernetes jobs with configurable
+      RBAC
+    digest: 0d9dbb694f4a36cfda79ac780ed1185637be5426cc327deb816ce00b1b17bfa2
+    home: https://github.com/pltf-dev/helm-charts
+    keywords:
+    - k8s-jobs
+    - jobs
+    maintainers:
+    - email: marcel@pltf.dev
+      name: marcel-dias
+    name: k8s-job
+    type: application
+    urls:
+    - https://github.com/pltf-dev/helm-charts/releases/download/k8s-job-0.3.0/k8s-job-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 0.2.2
     created: "2026-02-17T21:05:33.985819572Z"
     description: A Helm chart to deploy generic Kubernetes jobs with configurable
@@ -347,4 +365,4 @@ entries:
     urls:
     - https://github.com/pltf-dev/helm-charts/releases/download/releem-agent-0.1.0/releem-agent-0.1.0.tgz
     version: 0.1.0
-generated: "2026-02-17T21:05:33.98585546Z"
+generated: "2026-03-30T22:21:33.413774777Z"
